@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "jose": "^4.3.8",
+    "jose-jwe-jws": "^0.2.2",
+    "jsonwebtoken": "^8.5.1"
+  }
+}

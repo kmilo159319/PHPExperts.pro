@@ -1,0 +1,79 @@
+<?php
+class User {
+  // (A) CONNECT TO DATABASE
+  public $error = "";
+  private $pdo = null;
+  private $stmt = null;
+  function __construct () {
+  try {
+    $this->pdo = new PDO(
+      "mysql:host=".DB_HOST.";dbname=".DB_NAME.";charset=".DB_CHARSET,
+      DB_USER, DB_PASSWORD, [
+      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    } catch (Exception $ex) { exit($ex->getMessage()); }
+  }
+ 
+  // (B) CLOSE CONNECTION
+  function __destruct () {
+    if ($this->stmt!==null) { $this->stmt = null; }
+    if ($this->pdo!==null) { $this->pdo = null; }
+  }
+ 
+  // (C) RUN SQL QUERY
+  function query ($sql, $data=null) {
+    try {
+      $this->stmt = $this->pdo->prepare($sql);
+      $this->stmt->execute($data);
+      return true;
+    } catch (Exception $ex) {
+      $this->error = $ex->getMessage();
+      return false;
+    }
+  }
+ 
+  // (D) SAVE USER
+  function save ( $id,$name, $email,$username,$password) {
+    if ($id===null) {
+      $sql = "INSERT INTO `users` (`nombre`, `mail`,`username`,`contraseña`) VALUES (?,?,?,?)";
+      $data = [$name, $email,$username,$password,];
+    } else {
+      $sql = "UPDATE `users` SET `nombre`=?, `mail`=?,`username`=?,`contraseña`=?   WHERE `id`=?";
+      $data = [$name, $email,$username,$password,$id];
+    }
+    return $this->query($sql,$data);
+  
+  }
+ 
+  // (E) GET USER
+  function get ($username,$password) {
+    $this->query("SELECT * FROM `users` WHERE `username`='$username' and contraseña = '$password'",
+    );
+    return $this->stmt->fetch();
+  }
+ 
+  // (F) VERIFY USER
+  function verify ($usuario,$contraseña,$id=null) {
+    // (F1) GET USER
+    $user = $this->get($usuario,$contraseña);
+    $valid = is_array($user);
+
+    // (F3) RETURN RESULT (FALSE IF INVALID, USER ARRAY IF VALID)
+    if ($valid) { return $user; }
+    else {
+      $this->error = "Invalid user/password";
+      return false;
+    }
+  }
+
+  // (F) VERIFY USER
+  function search ($id) {
+      $this->query("SELECT * FROM `users` WHERE `id`='$id'",
+      ); 
+      return $this->stmt->fetch();
+    
+  }
+
+  
+}
